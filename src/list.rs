@@ -1,7 +1,6 @@
 use vstd::prelude::*;
 verus! {
 
-pub mod SingleLinkedList {
     use vstd::simple_pptr::*;
     use vstd::raw_ptr::MemContents;
 
@@ -20,7 +19,7 @@ pub mod SingleLinkedList {
     impl<T> Node<T> {
 
         // this terminates on a null-terminated node
-        spec fn optional_as_seq(node_opt: Option<Box<Node<T>>) -> Seq<T>
+        spec fn optional_as_seq(node_opt: Option<Box<Node<T>>>) -> Seq<T>
             decreases node_opt, // demonstrate that recursion will terminate
         {
             match node_opt {
@@ -28,12 +27,13 @@ pub mod SingleLinkedList {
                 Some(node) => node.as_seq(),
             }
         }
-        
-        // **Taken from Verus Tutorial on Treemap. Unsure how this works to interpret the linked list as a Seq** 
+
+        // **Taken from Verus Tutorial on Treemap. Unsure how this works to interpret the linked list as a Seq**
         spec fn as_seq(self) -> Seq<T>
-            decreases self,  
+            decreases self,
         {
-            Node<T>::optional_as_seq(self.next).insert(self.data)   
+            // Node<T>::optional_as_seq(self.next).insert(self.data)
+            seq![self.data] + Node<T>::optional_as_seq(self.next)
         }
     }
 
@@ -47,28 +47,23 @@ pub mod SingleLinkedList {
     }
 
     impl<T> View for LList<T> {
-        type T = Seq<T>; 
-        
-        // the view of the LList should be a sequence. This needs to be open so it is usable by 
-        // outside module 
+        type V = Seq<T>;
+
+        // the view of the LList should be a sequence. This needs to be open so it is usable by
+        // outside module
         open spec fn view(&self) -> Seq<T> {
-            self.as_seq() // IS THIS TREATED LIKE "closed" HERE?  
+            self.as_seq() // IS THIS TREATED LIKE "closed" HERE?
         }
     }
 
     impl <T> LList<T> {
         // Node at index i is well formed
-        spec fn well_formed_node(&self, i: int) -> bool 
+        spec fn well_formed_node(&self, i: int) -> bool
         {
-            &&& (i < self@.len) 
+            &&& (i < self@.len)
             &&& (i >= 0)
-            // what other properties would be here? 
-        } 
-    }
-
-
-
-
+            // what other properties would be here?
+        }
     }
 
 } // verus!
