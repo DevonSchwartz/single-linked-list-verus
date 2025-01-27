@@ -1,8 +1,6 @@
 use vstd::prelude::*;
 verus! {
 
-    use vstd::simple_pptr::*;
-    use vstd::raw_ptr::MemContents;
 
     // List<T> is a singly linked list
     struct LList<T>{
@@ -23,7 +21,7 @@ verus! {
             decreases node_opt, // demonstrate that recursion will terminate
         {
             match node_opt {
-                None => Seq::empty(),
+                None       => Seq::empty(),
                 Some(node) => node.as_seq(),
             }
         }
@@ -33,7 +31,7 @@ verus! {
             decreases self,
         {
             // Node<T>::optional_as_seq(self.next).insert(self.data)
-            seq![self.data] + Node<T>::optional_as_seq(self.next)
+            seq![self.data] + Node::<T>::optional_as_seq(self.next)
         }
     }
 
@@ -42,7 +40,7 @@ verus! {
         // do not show body outside module. This means that calls to this outside module
         // will not know as)seq calls optional_as_seq, which returns Seq<T>
         pub closed spec fn as_seq(self) -> Seq<T> {
-            Node::<V>::optional_as_seq(self.head)
+            Node::<T>::optional_as_seq(self.head)
         }
     }
 
@@ -56,13 +54,34 @@ verus! {
         }
     }
 
-    impl <T> LList<T> {
-        // Node at index i is well formed
-        spec fn well_formed_node(&self, i: int) -> bool
+    // executable functionality 
+    impl<T> LList<T> {
+        fn new() -> (out: Self)
+            ensures out@.len() == 0, // empty
         {
-            &&& (i < self@.len)
-            &&& (i >= 0)
-            // what other properties would be here?
+            Self {
+                head: None,
+                len: 0 
+            } // return empty list 
+        }
+
+        fn get(&self, index: usize) -> (out: &T)
+            requires index < self@.len()
+            ensures self@[index as int] == out
+        {
+            Node<T> temp = Self.head; 
+            let curr_index = 0; 
+
+            let ghost old = self@; 
+
+
+            while (curr_index < index) 
+                invariant
+                    self@ == old,
+                    self@[curr_index] == temp.data 
+            {
+                // TODO: Implement while loop 
+            }
         }
     }
 
