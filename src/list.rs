@@ -64,24 +64,30 @@ verus! {
                 len: 0 
             } // return empty list 
         }
-
+        
+        //TODO: Add proof function to show sequence is equivalent to linked list
         fn get(&self, index: usize) -> (out: &T)
             requires index < self@.len()
             ensures self@[index as int] == out
         {
-            Node<T> temp = Self.head; 
-            let curr_index = 0; 
+
+            let mut temp = self.head.as_ref().unwrap(); 
+            let mut curr_index = 0; 
 
             let ghost old = self@; 
-
+            
+            assert((curr_index as int) >= 0 && (curr_index as int) < self@.len());
+            assert(self@[0] == temp.data);
 
             while (curr_index < index) 
                 invariant
                     self@ == old,
-                    self@[curr_index] == temp.data 
+                    self@[curr_index as int] == temp.data 
             {
-                // TODO: Implement while loop 
+                temp = temp.next.as_ref().unwrap();
+                curr_index += 1;
             }
+            return &temp.data;
         }
     }
 
