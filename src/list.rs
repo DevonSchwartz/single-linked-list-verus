@@ -42,6 +42,24 @@ verus! {
         pub closed spec fn as_seq(self) -> Seq<T> {
             Node::<T>::optional_as_seq(self.head)
         }
+
+        proof fn lemma_view_values_equals_seq(self, i: int, current_node:Node<T> ) 
+            decreases self.len - i,
+            requires 
+                i >= 0,
+                i < self.len
+                self@[i] == current_node.data,
+            ensures
+                
+        { 
+            if (current_node.next == None) {
+                //base case
+            }
+            else {
+                //recursively call until end of list
+                self.lemma_view_values_equals_seq(self, i + 1, current_node.next);
+            }
+        }
     }
 
     impl<T> View for LList<T> {
