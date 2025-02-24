@@ -100,19 +100,21 @@ impl<T> LList<T> {
         while (curr_index < index)
             invariant
                 temp.is_some() && temp.unwrap()@ =~= self@.skip(curr_index as int),
-                curr_index <= index < self@.len() // why is this invariant necessary if covered by loop condition? 
+                curr_index <= index < self@.len() // why is this invariant necessary if covered by loop condition? **Maybe
 
         {
             assert(temp.unwrap().next.unwrap()@ =~= temp.unwrap()@.skip(1));
             temp = &temp.as_ref().unwrap().next;
             curr_index += 1;
         }
+
+
         assert(temp.unwrap()@ == seq![temp.unwrap().data] + match temp.unwrap().next {
             Some(n) => n.view(),
             None => seq![],
-        });
+        }); // assert extensional equality 
 
-        assert(temp.unwrap()@[0] == temp.unwrap().data);
+        assert(temp.unwrap()@[0] == temp.unwrap().data); // needed to prove postcondition
         return &temp.as_ref().unwrap().data;
     }
 }
