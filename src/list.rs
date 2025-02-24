@@ -117,6 +117,25 @@ impl<T> LList<T> {
         assert(temp.unwrap()@[0] == temp.unwrap().data); // needed to prove postcondition
         return &temp.as_ref().unwrap().data;
     }
+
+    fn push(&mut self, val: T) 
+        ensures 
+            self@.len() == old(self)@.len() + 1,
+            self@ == old(self)@.push(val),
+        {
+            let mut index = 0;
+            let mut cur_node = &self.head;
+            while (index < self.len) 
+                invariant
+                    cur_node.is_some(),
+                    index <= index < self@.len(),
+            {
+                cur_node = &cur_node.unwrap().next;
+                index += 1;
+            }
+            cur_node.as_mut().next = Some(Box::new(Node {data: val, next: None}));
+
+        }
 }
 
 } // verus!
