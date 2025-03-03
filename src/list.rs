@@ -21,6 +21,16 @@ impl<T> Node<T> {
             None => seq![],
         }
     }
+    
+    fn set_next(&mut self, append: Node<T>) {
+        if (self.next.is_none()) {
+            self.next = Some(Box::new(append));
+        } else {
+            //set to variable call recursively
+            self.next.take()
+        }
+        //put back value from temp variable in the else
+    }
 }
 
 // impl<T> LList<T> {
@@ -118,24 +128,25 @@ impl<T> LList<T> {
         return &temp.as_ref().unwrap().data;
     }
 
-    fn push(&mut self, val: T) 
-        ensures 
-            self@.len() == old(self)@.len() + 1,
-            self@ == old(self)@.push(val),
-        {
-            let mut index = 0;
-            let mut cur_node = &self.head;
-            while (index < self.len) 
-                invariant
-                    cur_node.is_some(),
-                    index <= index < self@.len(),
-            {
-                cur_node = &cur_node.unwrap().next;
-                index += 1;
-            }
-            cur_node.as_mut().next = Some(Box::new(Node {data: val, next: None}));
+    // fn push(&mut self, val: T) 
+    //     ensures 
+    //         self@.len() == old(self)@.len() + 1,
+    //         self@ == old(self)@.push(val),
+    //     {
+    //         let mut index = 0;
+    //         let mut cur_node = &self.head;
+    //         while (index < self.len) 
+    //             invariant
+    //                 cur_node.is_some(),
+    //                 index <= index < self@.len(),
+    //         {
+    //             cur_node = &cur_node.unwrap().next;
+    //             index += 1;
+    //         }
+    //         let mut temp = cur_node.take().unwrap();
+    //         temp.next = Some(Box::new(Node {data: val, next: None}));
 
-        }
+    //     }
 }
 
 } // verus!
