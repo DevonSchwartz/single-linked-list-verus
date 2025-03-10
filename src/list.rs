@@ -21,15 +21,40 @@ impl<T> Node<T> {
             None => seq![],
         }
     }
-    
-    fn set_next(&mut self, append: Node<T>) {
+
+    proof fn lemma_append_to_singleton_list(self, append: Node<T>) 
+        requires
+            self.next.unwrap() == append,
+            append.next.is_none(),
+        ensures 
+            self@ =~= seq![self.data, append.data],
+    {
+
+        //TODO: finish proving these asserts
+        assert(self@[0] == self.data);
+        assert(self@[1] == append.data);
+    }
+
+    fn set_next(&mut self, append: Node<T>) 
+        requires
+            append.next.is_none(),
+        ensures 
+            self@ == old(self)@.push(append.data),
+    {
         if (self.next.is_none()) {
+            assert(self@.len() == 1);
             self.next = Some(Box::new(append));
+            assert(self.next.unwrap() == append);
+            proof {self.lemma_append_to_singleton_list(append);}
+            assert(self@.len() == 2);
+            assert(self@ == old(self)@.push(append.data));
         } else {
             //set to variable call recursively
-            self.next.take()
+            let mut next = *self.next.take().unwrap();
+            next.set_next(append);
+            self.next = Some(Box::new(next));
+            assert(self@ == old(self)@.push(append.data));
         }
-        //put back value from temp variable in the else
     }
 }
 
@@ -128,25 +153,39 @@ impl<T> LList<T> {
         return &temp.as_ref().unwrap().data;
     }
 
-    // fn push(&mut self, val: T) 
-    //     ensures 
-    //         self@.len() == old(self)@.len() + 1,
-    //         self@ == old(self)@.push(val),
-    //     {
-    //         let mut index = 0;
-    //         let mut cur_node = &self.head;
-    //         while (index < self.len) 
-    //             invariant
-    //                 cur_node.is_some(),
-    //                 index <= index < self@.len(),
-    //         {
-    //             cur_node = &cur_node.unwrap().next;
-    //             index += 1;
-    //         }
-    //         let mut temp = cur_node.take().unwrap();
-    //         temp.next = Some(Box::new(Node {data: val, next: None}));
+    fn push(&mut self, val: T) 
+        requires
+            old(self).len < usize::MAX,
+        ensures 
+            self@.len() == old(self)@.len() + 1,
+            self@ == old(self)@.push(val),
+        {
+            //let mut index = 0;
+            //let mut cur_node = &self.head;
+            let append = Node {data: val, next: None};
+            
+            if (self.head.is_none()) {
+                self.head = Some(Box::new(append));
+            } else {
 
-    //     }
+                let mut head = *self.head.take().unwrap();
+                head.set_next(append);
+                self.head = Some(Box::new(head));
+            }
+
+            self.len = self.len + 1;
+            // while (index < self.len) 
+            //     invariant
+            //         cur_node.is_some(),
+            //         index <= index < self@.len(),
+            // {
+            //     cur_node = &cur_node.unwrap().next;
+            //     index += 1;
+            // }
+            // let mut temp = cur_node.take().unwrap();
+            // temp.next = Some(Box::new(Node {data: val, next: None}));
+
+        }
 }
 
 } // verus!
