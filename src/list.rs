@@ -126,6 +126,18 @@ impl<T> LList<T> {
 
             self.len = self.len + 1;
         }
+
+    fn push_front(&mut self, val: T) 
+        requires
+            old(self).len < usize::MAX,
+        ensures
+            self@.len() == old(self)@.len() + 1,
+            self@ =~= seq![val] + old(self)@,
+        {
+            let next = self.head.take();
+            self.head = Some(Box::new(Node{data: val, next: next }));
+            self.len = self.len + 1;
+        }
 }
 
 } // verus!
