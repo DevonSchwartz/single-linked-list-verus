@@ -22,19 +22,6 @@ impl<T> Node<T> {
         }
     }
 
-    proof fn lemma_append_to_singleton_list(self, append: Node<T>) 
-        requires
-            self.next.unwrap() == append,
-            append.next.is_none(),
-        ensures 
-            self@ =~= seq![self.data, append.data],
-    {
-
-        //TODO: finish proving these asserts
-        assert(self@[0] == self.data);
-        assert(self@[1] == append.data);
-    }
-
     fn set_next(&mut self, append: Node<T>) 
         requires
             append.next.is_none(),
@@ -43,9 +30,13 @@ impl<T> Node<T> {
     {
         if (self.next.is_none()) {
             assert(self@.len() == 1);
+            assert(self@[0] == self.data);
             self.next = Some(Box::new(append));
-            assert(self.next.unwrap() == append);
-            proof {self.lemma_append_to_singleton_list(append);}
+
+            // show that the pushed nodes sequence is the same as the current nodes sequence with the current node truncated 
+            assert(self.next.unwrap()@ =~= self@.skip(1)); 
+
+            assert(self@[1] == append.data);
             assert(self@.len() == 2);
             assert(self@ == old(self)@.push(append.data));
         } else {
