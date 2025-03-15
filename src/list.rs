@@ -22,10 +22,10 @@ impl<T> Node<T> {
         }
     }
 
-    fn set_next(&mut self, append: Node<T>) 
+    fn set_next(&mut self, append: Node<T>)
         requires
             append.next.is_none(),
-        ensures 
+        ensures
             self@ == old(self)@.push(append.data),
     {
         if (self.next.is_none()) {
@@ -33,8 +33,8 @@ impl<T> Node<T> {
             assert(self@[0] == self.data);
             self.next = Some(Box::new(append));
 
-            // show that the pushed nodes sequence is the same as the current nodes sequence with the current node truncated 
-            assert(self.next.unwrap()@ =~= self@.skip(1)); 
+            // show that the pushed nodes sequence is the same as the current nodes sequence with the current node truncated
+            assert(self.next.unwrap()@ =~= self@.skip(1));
 
             assert(self@[1] == append.data);
             assert(self@.len() == 2);
@@ -69,7 +69,8 @@ impl<T> LList<T> {
     fn new() -> (out: Self)
         ensures
             out@.len() == 0,
-            out@ == Seq::<T>::empty()  // empty
+            out@ == Seq::<T>::empty(),  // empty
+
     {
         Self { head: None, len: 0 }  // return empty list
 
@@ -88,7 +89,8 @@ impl<T> LList<T> {
         while (curr_index < index)
             invariant
                 temp.is_some() && temp.unwrap()@ =~= self@.skip(curr_index as int),
-                curr_index <= index < self@.len() // why is this invariant necessary if covered by loop condition? **Maybe
+                curr_index <= index
+                    < self@.len(),  // why is this invariant necessary if covered by loop condition? **Maybe
 
         {
             assert(temp.unwrap().next.unwrap()@ =~= temp.unwrap()@.skip(1));
@@ -96,49 +98,62 @@ impl<T> LList<T> {
             curr_index += 1;
         }
 
-
         assert(temp.unwrap()@ == seq![temp.unwrap().data] + match temp.unwrap().next {
             Some(n) => n.view(),
             None => seq![],
-        }); // assert extensional equality 
+        });  // assert extensional equality
 
-        assert(temp.unwrap()@[0] == temp.unwrap().data); // needed to prove postcondition
+        assert(temp.unwrap()@[0] == temp.unwrap().data);  // needed to prove postcondition
         return &temp.as_ref().unwrap().data;
     }
 
-    fn push(&mut self, val: T) 
+    fn push(&mut self, val: T)
         requires
             old(self).len < usize::MAX,
-        ensures 
+        ensures
             self@.len() == old(self)@.len() + 1,
             self@ == old(self)@.push(val),
-        {
-            let append = Node {data: val, next: None};
-            
-            if (self.head.is_none()) {
-                self.head = Some(Box::new(append));
-            } else {
+    {
+        let append = Node { data: val, next: None };
 
-                let mut head = *self.head.take().unwrap();
-                head.set_next(append);
-                self.head = Some(Box::new(head));
-            }
-
-            self.len = self.len + 1;
+        if (self.head.is_none()) {
+            self.head = Some(Box::new(append));
+        } else {
+            let mut head = *self.head.take().unwrap();
+            head.set_next(append);
+            self.head = Some(Box::new(head));
         }
 
-    fn push_front(&mut self, val: T) 
+        self.len = self.len + 1;
+    }
+
+    fn push_front(&mut self, val: T)
         requires
             old(self).len < usize::MAX,
         ensures
             self@.len() == old(self)@.len() + 1,
             self@ =~= seq![val] + old(self)@,
-        {
-            // code heavily sourced from https://github.com/verus-lang/paper-sosp24-artifact/blob/main/milli/linked-list/verus.rs
-            let next = self.head.take();
-            self.head = Some(Box::new(Node{data: val, next: next }));
-            self.len = self.len + 1;
-        }
+    {
+        // code heavily sourced from https://github.com/verus-lang/paper-sosp24-artifact/blob/main/milli/linked-list/verus.rs
+        let next = self.head.take();
+        self.head = Some(Box::new(Node { data: val, next: next }));
+        self.len = self.len + 1;
+    }
+
+    fn remove_front(&mut self) -> (old_val: T)
+        requires
+            old(self).len > 0,
+            old(self)@.len() > 0
+        ensures
+            self@.len() == old(self)@.len() - 1,
+            self@ =~= old(self)@.skip(1),
+            old(self)@[0] == old_val,
+    {
+        let old_head = self.head.take().unwrap();
+        self.head = old_head.next;
+        self.len = self.len - 1; 
+        old_head.data
+    }
 }
 
 } // verus!
