@@ -134,6 +134,7 @@ impl<T> LList<T> {
             self@.len() == old(self)@.len() + 1,
             self@ =~= seq![val] + old(self)@,
         {
+            // code heavily sourced from https://github.com/verus-lang/paper-sosp24-artifact/blob/main/milli/linked-list/verus.rs
             let next = self.head.take();
             self.head = Some(Box::new(Node{data: val, next: next }));
             self.len = self.len + 1;
