@@ -49,44 +49,6 @@ impl<T> Node<T> {
     }
 }
 
-// impl<T> LList<T> {
-//     // do not show body outside module. This means that calls to this outside module
-//     // will not know as)seq calls optional_as_seq, which returns Seq<T>
-//     // pub closed spec fn as_seq(self) -> Seq<T> {
-//     //     Node::<T>::optional_as_seq(self.head)
-//     // }
-//     // proof fn lemma_view_values_equals_seq(self, i: int, current_node:Box<Node<T>>)
-//     //     requires
-//     //         self@.len() == self.len,
-//     //         i >= 0,
-//     //         i < self.len,
-//     //         self@[i] == current_node.data,
-//     //         i == self.len - 1 ==> current_node.next is None,
-//     //         i < self.len - 1 ==> current_node.next is Some,
-//     //     ensures
-//     //         i < self.len - 1 ==> self@[i + 1] == current_node.next.unwrap().data,
-//     //         i == self.len - 1 ==> current_node.next is None,
-//     //     decreases self.len - 1 - i
-//     // {
-//     //     // if (current_node.next is None) {
-//     //     //     assert(i == self.len - 1);
-//     //     //     //base case
-//     //     // }
-//     //     if (i == self.len - 1) {
-//     //         // base case
-//     //     }
-//     //     else {
-//     //         assert(current_node.next is Some);
-//     //         assert( seq![current_node.data] + current_node.next.unwrap().as_seq() == self@.subrange(i, self@.len() as int));
-//     //         assert(current_node.as_seq() == seq![current_node.data] + current_node.next.unwrap().as_seq());
-//     //         assert(current_node.as_seq() == self@.subrange(i, self@.len() as int));
-//     //         //recursively call until end of list
-//     //         self.lemma_view_values_equals_seq(i + 1, current_node.next.unwrap());
-//     //     }
-//     // }
-
-// }
-
 impl<T> View for LList<T> {
     type V = Seq<T>;
 
