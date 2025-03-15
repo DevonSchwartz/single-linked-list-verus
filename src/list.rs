@@ -113,8 +113,6 @@ impl<T> LList<T> {
             self@.len() == old(self)@.len() + 1,
             self@ == old(self)@.push(val),
         {
-            //let mut index = 0;
-            //let mut cur_node = &self.head;
             let append = Node {data: val, next: None};
             
             if (self.head.is_none()) {
@@ -127,17 +125,6 @@ impl<T> LList<T> {
             }
 
             self.len = self.len + 1;
-            // while (index < self.len) 
-            //     invariant
-            //         cur_node.is_some(),
-            //         index <= index < self@.len(),
-            // {
-            //     cur_node = &cur_node.unwrap().next;
-            //     index += 1;
-            // }
-            // let mut temp = cur_node.take().unwrap();
-            // temp.next = Some(Box::new(Node {data: val, next: None}));
-
         }
 }
 
