@@ -63,21 +63,48 @@ impl<T> Node<T> {
             self.next = None;
             assert(self.next.is_none());
             assert(self@.len() == 1);
-            // assert(self@.skip(1) =~= seq![]); 
+            // assert(self@.skip(1) =~= seq![]);
             assert(remove_node@[0] == remove_node.data);
             assert(self@ == old(self)@.drop_last());
-            return remove_node.data; 
+            return remove_node.data;
         }
-        assert(remove_node.next.is_some()); 
+        assert(remove_node.next.is_some());
 
         let removed_val = remove_node.remove_next();
         self.next = Some(Box::new(remove_node));
 
-        assert(self.next.is_some()); 
-        assert(self.next.unwrap()@ =~= self@.skip(1)); 
+        assert(self.next.is_some());
+        assert(self.next.unwrap()@ =~= self@.skip(1));
 
         assert(self@ =~= old(self)@.drop_last());
         assert(self@.len() == old(self)@.len() - 1);
+        removed_val
+    }
+
+    fn remove_middle(&mut self, index: usize) -> (old_val: T)
+        requires
+            1 <= index < old(self)@.len(),
+            old(self).next.is_some(),
+        ensures
+            self@ =~= old(self)@.remove(index as int),
+            old(self)@[index as int] == old_val,
+            self@.len() == old(self)@.len() - 1,
+    {
+        let mut remove_node = *self.next.take().unwrap();
+
+        if (index == 1) {
+            self.next = remove_node.next;
+            assert(self.next == remove_node.next);
+            assert(self.next.unwrap()@ =~= remove_node.next.unwrap()@);
+
+            assert(self@ =~= old(self)@.remove(index as int));
+            assert(self@ =~= seq![old(self)@[0]] + old(self)@.skip(2));
+
+
+            return remove_node.data;
+        }
+        let removed_val = remove_node.remove_middle(index - 1);
+        self.next = Some(Box::new(remove_node));
         removed_val
     }
 }
@@ -176,7 +203,7 @@ impl<T> LList<T> {
             old(self)@.len() > 0,
         ensures
             self@.len() == old(self)@.len() - 1,
-            self@ =~= old(self)@.drop_first(),
+            self@ =~= old(self)@.remove(0),
             old(self)@[0] == old_val,
     {
         let old_head = self.head.take().unwrap();
@@ -212,6 +239,29 @@ impl<T> LList<T> {
         self.len = self.len - 1;
         removed_data
     }
+    fn remove(&mut self, index: usize) -> (old_val: T)
+        requires
+            index < old(self)@.len(),
+            old(self).len > 0,
+            old(self)@.len() > 0,
+        ensures
+            self@.len() == old(self)@.len() - 1,
+            self@ =~= old(self)@.remove(index as int),
+            old(self)@[index as int] == old_val,
+    {
+        if (index == 0) {
+            return self.remove_front();
+        }
+        assert(self@.len() >= 2); 
+        assert(index >= 1); 
+
+        let mut head = *self.head.take().unwrap();
+        let removed_data = head.remove_middle(index);
+        self.head = Some(Box::new(head)); 
+        self.len = self.len - 1;
+        removed_data
+    }
+
 }
 
 } // verus!
