@@ -47,6 +47,39 @@ impl<T> Node<T> {
             assert(self@ == old(self)@.push(append.data));
         }
     }
+
+    fn remove_next(&mut self) -> (old_val: T)
+        requires
+            old(self).next.is_some(),
+        ensures
+            self@ =~= old(self)@.drop_last(),
+            old(self)@.last() == old_val,
+            self@.len() == old(self)@.len() - 1,
+    {
+        let mut remove_node = *self.next.take().unwrap();
+
+        if (remove_node.next.is_none()) {
+            // assert(remove_node@.len() == 1);
+            self.next = None;
+            assert(self.next.is_none());
+            assert(self@.len() == 1);
+            // assert(self@.skip(1) =~= seq![]); 
+            assert(remove_node@[0] == remove_node.data);
+            assert(self@ == old(self)@.drop_last());
+            return remove_node.data; 
+        }
+        assert(remove_node.next.is_some()); 
+
+        let removed_val = remove_node.remove_next();
+        self.next = Some(Box::new(remove_node));
+
+        assert(self.next.is_some()); 
+        assert(self.next.unwrap()@ =~= self@.skip(1)); 
+
+        assert(self@ =~= old(self)@.drop_last());
+        assert(self@.len() == old(self)@.len() - 1);
+        removed_val
+    }
 }
 
 impl<T> View for LList<T> {
@@ -70,7 +103,6 @@ impl<T> LList<T> {
         ensures
             out@.len() == 0,
             out@ == Seq::<T>::empty(),  // empty
-
     {
         Self { head: None, len: 0 }  // return empty list
 
@@ -89,9 +121,7 @@ impl<T> LList<T> {
         while (curr_index < index)
             invariant
                 temp.is_some() && temp.unwrap()@ =~= self@.skip(curr_index as int),
-                curr_index <= index
-                    < self@.len(),  // why is this invariant necessary if covered by loop condition? **Maybe
-
+                curr_index <= index < self@.len(),  // why is this invariant necessary if covered by loop condition? **Maybe
         {
             assert(temp.unwrap().next.unwrap()@ =~= temp.unwrap()@.skip(1));
             temp = &temp.as_ref().unwrap().next;
@@ -143,16 +173,44 @@ impl<T> LList<T> {
     fn remove_front(&mut self) -> (old_val: T)
         requires
             old(self).len > 0,
-            old(self)@.len() > 0
+            old(self)@.len() > 0,
         ensures
             self@.len() == old(self)@.len() - 1,
-            self@ =~= old(self)@.skip(1),
+            self@ =~= old(self)@.drop_first(),
             old(self)@[0] == old_val,
     {
         let old_head = self.head.take().unwrap();
         self.head = old_head.next;
-        self.len = self.len - 1; 
+        self.len = self.len - 1;
         old_head.data
+    }
+
+    fn remove_last(&mut self) -> (old_val: T)
+        requires
+            old(self).len > 0,
+            old(self)@.len() > 0,
+        ensures
+            self@.len() == old(self)@.len() - 1,
+            self@ =~= old(self)@.drop_last(),
+            old(self)@.last() == old_val,
+    {
+        let mut head = *self.head.take().unwrap();
+
+        let removed_data = match head.next {
+            Some(_) => {
+                let data = head.remove_next();
+                self.head = Some(Box::new(head));
+                data
+            },
+            None => {
+                let data = head.data;
+                self.head = None;
+                data
+            },
+        };
+
+        self.len = self.len - 1;
+        removed_data
     }
 }
 
