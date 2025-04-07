@@ -7,9 +7,9 @@ struct LList<T> {
     len: usize,
 }
 
-struct Node<T> {
-    data: T,
-    next: Option<Box<Node<T>>>,
+pub struct Node<T> {
+    pub data: T,
+    pub next: Option<Box<Node<T>>>,
 }
 
 impl<T> Node<T> {
@@ -209,6 +209,8 @@ impl<T> LList<T> {
         let old_head = self.head.take().unwrap();
         self.head = old_head.next;
         self.len = self.len - 1;
+        // TODO: remove assume and prove
+        assume(old(self)@[0] == old_head.data);
         old_head.data
     }
 
@@ -264,13 +266,16 @@ impl<T> LList<T> {
     }
 }
 
-struct LLIter<'a, T> {
-    list: &'a LList<T>,
-    curr_node: &'a Node<T>
+pub struct LLIter<'a, T> {
+    pub list: &'a LList<T>,
+    pub curr_node: &'a Node<T>
 }
 
 impl<'a,T> LLIter<'a, T> {
-    fn new(list: &'a mut LList<T>) -> LLIter<'a, T> {
+    fn new(list: &'a mut LList<T>) -> LLIter<'a, T>
+        requires
+            old(list).head is Some,
+    {
         LLIter {
             list,
             curr_node: list.head.as_ref().unwrap(),
@@ -278,18 +283,32 @@ impl<'a,T> LLIter<'a, T> {
     }
 }
 
-impl<'a,T> Iterator for LLIter<'a, T> {
+impl<'a,T: Clone> Iterator for LLIter<'a, T> {
 
     type Item = T; 
 
-    fn next(&mut self) -> Option<Self::Item> {
+
+    // TODO:
+    // - is this function supposed to return the old or the new value?
+    // - if it returns the old value, may need to change how we handle the end of the tail
+    // - need fix up the postcondition in the Some case
+    // - need to specify what happens to curr_node
+    fn next(&mut self) -> (result: Option<Self::Item>)
+        ensures 
+            old(self).curr_node.next is None ==> result is None,
+            old(self).curr_node.next is Some ==> result == Some(old(self).curr_node.data)
+    {
         // options: 1. return none don't change curr_node at end
         // 2. store an option around node and set to none at end of list
-        if (self.curr_node.is_some()) {
+        if (self.curr_node.next.is_some()) {
             let old_node = self.curr_node;
             self.curr_node = self.curr_node.next.as_ref().unwrap();
-            return old_node; 
+
+            let cloned_data = old_node.data.clone();
+            assume(cloned_data == old_node.data); // TODO: fix -- look into specification for clone
+            return Some(old_node.data.clone()); 
         }
+        assert(self.curr_node.next is None);
         return None; 
     }
 }
