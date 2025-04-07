@@ -239,6 +239,7 @@ impl<T> LList<T> {
         self.len = self.len - 1;
         removed_data
     }
+
     fn remove(&mut self, index: usize) -> (old_val: T)
         requires
             index < old(self)@.len(),
@@ -261,7 +262,35 @@ impl<T> LList<T> {
         self.len = self.len - 1;
         removed_data
     }
-
 }
 
-} // verus!
+struct LLIter<'a, T> {
+    list: &'a LList<T>,
+    curr_node: &'a Node<T>
+}
+
+impl<'a,T> LLIter<'a, T> {
+    fn new(list: &'a mut LList<T>) -> LLIter<'a, T> {
+        LLIter {
+            list,
+            curr_node: list.head.as_ref().unwrap(),
+        }
+    }
+}
+
+impl<'a,T> Iterator for LLIter<'a, T> {
+
+    type Item = T; 
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // options: 1. return none don't change curr_node at end
+        // 2. store an option around node and set to none at end of list
+        if (self.curr_node.is_some()) {
+            let old_node = self.curr_node;
+            self.curr_node = self.curr_node.next.as_ref().unwrap();
+            return old_node; 
+        }
+        return None; 
+    }
+}
+}
