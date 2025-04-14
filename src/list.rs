@@ -268,17 +268,18 @@ impl<T> LList<T> {
 
 pub struct LLIter<'a, T> {
     pub list: &'a LList<T>,
-    pub curr_node: &'a Node<T>
+    pub curr_node: Option<&'a Box<Node<T>>>
 }
 
 impl<'a,T> LLIter<'a, T> {
     fn new(list: &'a mut LList<T>) -> LLIter<'a, T>
-        requires
-            old(list).head is Some,
+        // requires
+        //     old(list).head is Some,
     {
         LLIter {
             list,
-            curr_node: list.head.as_ref().unwrap(),
+            // curr_node: list.head.as_ref().unwrap(),
+            curr_node: list.head.as_ref(),
         }
     }
 }
@@ -295,21 +296,37 @@ impl<'a,T: Clone> Iterator for LLIter<'a, T> {
     // - need to specify what happens to curr_node
     fn next(&mut self) -> (result: Option<Self::Item>)
         ensures 
-            old(self).curr_node.next is None ==> result is None,
-            old(self).curr_node.next is Some ==> result == Some(old(self).curr_node.data)
+            old(self).curr_node is None ==> result is None,
+            old(self).curr_node is Some ==> result == Some(old(self).curr_node.unwrap().data)
     {
         // options: 1. return none don't change curr_node at end
         // 2. store an option around node and set to none at end of list
-        if (self.curr_node.next.is_some()) {
-            let old_node = self.curr_node;
-            self.curr_node = self.curr_node.next.as_ref().unwrap();
 
-            let cloned_data = old_node.data.clone();
-            assume(cloned_data == old_node.data); // TODO: fix -- look into specification for clone
-            return Some(old_node.data.clone()); 
+        let returnedData = match self.curr_node {
+            Some(node) => Some(node.data.clone()),
+            None => None
+        };
+
+
+        if (self.curr_node.is_some()) {
+            assert(returnedData == Some(self.curr_node.unwrap().data)); 
+            // let old_node = self.curr_node.unwrap();
+            // assert(Some(old_node) == self.curr_node); 
+            // assert(Some(old_node.data) == Some(self.curr_node.unwrap().data)); 
+
+            // self.curr_node = self.curr_node.next.as_ref().unwrap();
+            self.curr_node = self.curr_node.unwrap().next.as_ref();
+
+
+            // // assert(self.curr_node@ =~= old_node@.skip(1));
+            // // assert(old_node == )
+
+            // let cloned_data = old_node.data.clone();
+            // assume(Some(cloned_data) == Some(old_node.data)); // TODO: fix -- look into specification for clone
+            // return Some(old_node.data.clone()); 
         }
-        assert(self.curr_node.next is None);
-        return None; 
+        // assert(self.curr_node is None);
+        return returnedData; 
     }
 }
 }
