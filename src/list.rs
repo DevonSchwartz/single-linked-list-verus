@@ -284,9 +284,9 @@ impl<'a,T> LLIter<'a, T> {
     }
 }
 
-impl<'a,T: Clone> Iterator for LLIter<'a, T> {
+impl<'a,T> Iterator for LLIter<'a, T> {
 
-    type Item = T; 
+    type Item = &'a T; 
 
 
     // TODO:
@@ -297,19 +297,21 @@ impl<'a,T: Clone> Iterator for LLIter<'a, T> {
     fn next(&mut self) -> (result: Option<Self::Item>)
         ensures 
             old(self).curr_node is None ==> result is None,
-            old(self).curr_node is Some ==> result == Some(old(self).curr_node.unwrap().data)
+            old(self).curr_node is Some ==> result == Some(&old(self).curr_node.unwrap().data)
     {
         // options: 1. return none don't change curr_node at end
         // 2. store an option around node and set to none at end of list
 
         let returnedData = match self.curr_node {
-            Some(node) => Some(node.data.clone()),
+            Some(node) => Some(&node.data),
             None => None
         };
 
 
         if (self.curr_node.is_some()) {
-            assert(returnedData == Some(self.curr_node.unwrap().data)); 
+            // let old_data = &self.curr_node.unwrap().data;
+            // assert(old_data == self.curr_node.unwrap().data); 
+            // assert(returnedData == Some(self.curr_node.unwrap().data)); 
             // let old_node = self.curr_node.unwrap();
             // assert(Some(old_node) == self.curr_node); 
             // assert(Some(old_node.data) == Some(self.curr_node.unwrap().data)); 
