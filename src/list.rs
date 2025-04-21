@@ -2,12 +2,12 @@ use vstd::prelude::*;
 verus! {
 
 // List<T> is a singly linked list
-struct LList<T> {
-    head: Option<Box<Node<T>>>,
-    len: usize,
+pub struct LList<T> {
+    pub head: Option<Box<Node<T>>>,
+    pub len: usize,
 }
 
-pub struct Node<T> {
+struct Node<T> {
     pub data: T,
     pub next: Option<Box<Node<T>>>,
 }
@@ -126,7 +126,7 @@ impl<T> View for LList<T> {
 
 // executable functionality
 impl<T> LList<T> {
-    fn new() -> (out: Self)
+    pub fn new() -> (out: Self)
         ensures
             out@.len() == 0,
             out@ == Seq::<T>::empty(),  // empty
@@ -136,7 +136,7 @@ impl<T> LList<T> {
     }
 
     //TODO: Add proof function to show sequence is equivalent to linked list
-    fn get(&self, index: usize) -> (out: &T)
+    pub fn get(&self, index: usize) -> (out: &T)
         requires
             index < self@.len(),
         ensures
@@ -164,7 +164,7 @@ impl<T> LList<T> {
         return &temp.as_ref().unwrap().data;
     }
 
-    fn push(&mut self, val: T)
+    pub fn push(&mut self, val: T)
         requires
             old(self).len < usize::MAX,
         ensures
@@ -184,7 +184,7 @@ impl<T> LList<T> {
         self.len = self.len + 1;
     }
 
-    fn push_front(&mut self, val: T)
+    pub fn push_front(&mut self, val: T)
         requires
             old(self).len < usize::MAX,
         ensures
@@ -197,7 +197,7 @@ impl<T> LList<T> {
         self.len = self.len + 1;
     }
 
-    fn remove_front(&mut self) -> (old_val: T)
+    pub fn remove_front(&mut self) -> (old_val: T)
         requires
             old(self).len > 0,
             old(self)@.len() > 0,
@@ -214,7 +214,7 @@ impl<T> LList<T> {
         old_head.data
     }
 
-    fn remove_last(&mut self) -> (old_val: T)
+    pub fn remove_last(&mut self) -> (old_val: T)
         requires
             old(self).len > 0,
             old(self)@.len() > 0,
@@ -242,7 +242,7 @@ impl<T> LList<T> {
         removed_data
     }
 
-    fn remove(&mut self, index: usize) -> (old_val: T)
+    pub fn remove(&mut self, index: usize) -> (old_val: T)
         requires
             index < old(self)@.len(),
             old(self).len > 0,
@@ -266,13 +266,22 @@ impl<T> LList<T> {
     }
 }
 
+impl<'a, T> IntoIterator for &'a LList<T> {
+    type Item = &'a T; 
+    type IntoIter = LLIter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        LLIter::new(self)
+    }
+}
+
 pub struct LLIter<'a, T> {
     pub list: &'a LList<T>,
     pub curr_node: Option<&'a Box<Node<T>>>
 }
 
 impl<'a,T> LLIter<'a, T> {
-    fn new(list: &'a mut LList<T>) -> LLIter<'a, T>
+    fn new(list: &'a LList<T>) -> LLIter<'a, T>
         // requires
         //     old(list).head is Some,
     {
@@ -296,8 +305,11 @@ impl<'a,T> Iterator for LLIter<'a, T> {
     // - need to specify what happens to curr_node
     fn next(&mut self) -> (result: Option<Self::Item>)
         ensures 
-            old(self).curr_node is None ==> result is None,
-            old(self).curr_node is Some ==> result == Some(&old(self).curr_node.unwrap().data)
+            old(self).curr_node is None ==> result is None && self.curr_node is None,
+            old(self).curr_node is Some ==> result == Some(&old(self).curr_node.unwrap().data),
+            old(self).curr_node is Some && old(self).curr_node.unwrap().next is None ==> self.curr_node is None,
+            old(self).curr_node is Some && old(self).curr_node.unwrap().next is Some ==> 
+                old(self).curr_node.unwrap().next.unwrap() == self.curr_node.unwrap()
     {
         // options: 1. return none don't change curr_node at end
         // 2. store an option around node and set to none at end of list
