@@ -7,7 +7,7 @@ pub struct LList<T> {
     pub len: usize,
 }
 
-struct Node<T> {
+pub struct Node<T> {
     pub data: T,
     pub next: Option<Box<Node<T>>>,
 }
@@ -22,6 +22,7 @@ impl<T> Node<T> {
         }
     }
 
+    #[verifier::exec_allows_no_decreases_clause]
     fn set_next(&mut self, append: Node<T>)
         requires
             append.next.is_none(),
@@ -48,6 +49,7 @@ impl<T> Node<T> {
         }
     }
 
+    #[verifier::exec_allows_no_decreases_clause]
     fn remove_next(&mut self) -> (old_val: T)
         requires
             old(self).next.is_some(),
@@ -81,6 +83,7 @@ impl<T> Node<T> {
         removed_val
     }
 
+    #[verifier::exec_allows_no_decreases_clause]
     fn remove_middle(&mut self, index: usize) -> (old_val: T)
         requires
             1 <= index < old(self)@.len(),
@@ -130,12 +133,14 @@ impl<T> LList<T> {
         ensures
             out@.len() == 0,
             out@ == Seq::<T>::empty(),  // empty
+            out.len == out@.len(),
     {
         Self { head: None, len: 0 }  // return empty list
 
     }
 
     //TODO: Add proof function to show sequence is equivalent to linked list
+    #[verifier::exec_allows_no_decreases_clause]
     pub fn get(&self, index: usize) -> (out: &T)
         requires
             index < self@.len(),
@@ -166,12 +171,16 @@ impl<T> LList<T> {
 
     pub fn push(&mut self, val: T)
         requires
-            old(self).len < usize::MAX,
+            old(self)@.len() < usize::MAX,
+            old(self).len == old(self)@.len(),
         ensures
             self@.len() == old(self)@.len() + 1,
             self@ == old(self)@.push(val),
+            self.len == self@.len(),
     {
         let append = Node { data: val, next: None };
+
+        assert(self.len == self@.len());
 
         if (self.head.is_none()) {
             self.head = Some(Box::new(append));
